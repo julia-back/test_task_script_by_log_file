@@ -3,7 +3,9 @@ import json
 from tabulate import tabulate
 
 
-def parse_command_line():
+def parse_command_line() -> argparse.Namespace:
+    """Функция для обработки команды в командной строке."""
+
     parser = argparse.ArgumentParser()
     parser.add_argument("-f", "--file", help="path to the log file",
                         type=str, nargs="*")
@@ -11,10 +13,15 @@ def parse_command_line():
                         type=str, choices=["average"])
 
     args = parser.parse_args()
+
     return args
 
 
-def analyzes_log_files_average(paths: list[str]):
+def analyzes_log_files_average(paths: list[str]) -> list[dict]:
+    """
+    Функция для анализа файлов с логами. Находит количество эндпоинтов,
+    общее время ответа и среднее время ответа по каждому эндпоинту.
+    """
 
     result_data = []
 
@@ -46,7 +53,8 @@ def analyzes_log_files_average(paths: list[str]):
     return result_data
 
 
-def display_average(data: list[dict]):
+def display_average(data: list[dict]) -> None:
+    """Функция для настройки отображения результата. Печатает результат в консоль."""
 
     for row in data:
         row.pop("sum_response_time")
@@ -54,7 +62,9 @@ def display_average(data: list[dict]):
     print(tabulate(data, headers="keys", showindex="always", floatfmt=".3f"))
 
 
-def main():
+def main() -> None:
+    """Основная функция запуска скрипта."""
+
     command_line_args = parse_command_line()
 
     if command_line_args.report == "average":
