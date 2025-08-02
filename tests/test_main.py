@@ -1,11 +1,13 @@
-import pytest
 import json
-from unittest.mock import patch, mock_open
-from main import parse_command_line, analyzes_log_files_average, display_average, main
+from unittest.mock import mock_open, patch
+
+import pytest
+
+from main import analyzes_log_files_average, display_average, main, parse_command_line
 
 
 @pytest.fixture
-def mock_log_data():
+def mock_log_data() -> str:
     """Функция для замены результата открытия файла с логами. Возвращает тестовые данные логов в виде строки."""
 
     logs = [
@@ -20,7 +22,7 @@ def mock_log_data():
 
 
 @pytest.fixture
-def mock_log_data2():
+def mock_log_data2() -> str:
     """Функция для замены результата открытия файла с логами. Возвращает второй набор тестовых данных."""
 
     logs = [
@@ -31,7 +33,7 @@ def mock_log_data2():
     return "\n".join(json.dumps(log) for log in logs)
 
 
-def test_parse_command_line():
+def test_parse_command_line() -> None:
     """Функция тестирования обработки командной строки."""
 
     test_args = ["--file", "file1.log", "file2.log", "--report", "average"]
@@ -41,7 +43,7 @@ def test_parse_command_line():
         assert args.report == "average"
 
 
-def test_analyzes_log_files_average(mock_log_data):
+def test_analyzes_log_files_average(mock_log_data: str) -> None:
     """Функция тестирования обработки файла с логами."""
 
     with patch("builtins.open", mock_open(read_data=mock_log_data)):
@@ -60,7 +62,7 @@ def test_analyzes_log_files_average(mock_log_data):
     assert api2_data["avg_response_time"] == 0.4
 
 
-def test_display_average(capsys):
+def test_display_average(capsys) -> None:
     """Функция тестирования вывода в консоль."""
 
     test_data = [
@@ -79,7 +81,7 @@ def test_display_average(capsys):
     assert "0.800" not in captured.out
 
 
-def test_main_with_mocked_files(mock_log_data, capsys):
+def test_main_with_mocked_files(mock_log_data: str, capsys) -> None:
     """Функция тестирования основной функции main()."""
 
     with (patch("sys.argv", ["test.py", "--report", "average", "--file", "test.log"]),
@@ -94,7 +96,7 @@ def test_main_with_mocked_files(mock_log_data, capsys):
         assert "0.400" in captured.out
 
 
-def test_main_no_files():
+def test_main_no_files() -> None:
     """Функция обработки отстутствия файла."""
 
     with patch("sys.argv", ["test.py", "--report", "average"]), \
