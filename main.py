@@ -1,5 +1,6 @@
 import argparse
 import json
+from tabulate import tabulate
 
 
 def parse_command_line():
@@ -13,7 +14,7 @@ def parse_command_line():
     return args
 
 
-def analyzes_log_files(paths: list[str]):
+def analyzes_log_files_average(paths: list[str]):
 
     result_data = []
 
@@ -45,13 +46,23 @@ def analyzes_log_files(paths: list[str]):
     return result_data
 
 
+def display_average(data: list[dict]):
+
+    for row in data:
+        row.pop("sum_response_time")
+
+    print(tabulate(data, headers="keys", showindex="always", floatfmt=".3f"))
+
+
 def main():
     command_line_args = parse_command_line()
 
-    if command_line_args.file:
-        log_data = analyzes_log_files(command_line_args.file)
-
-        print(log_data)
+    if command_line_args.report == "average":
+        if command_line_args.file:
+            log_data = analyzes_log_files_average(command_line_args.file)
+            display_average(log_data)
+        else:
+            raise ValueError("Path not specified. Specify the path to the file or files.")
 
 
 if __name__ == "__main__":
