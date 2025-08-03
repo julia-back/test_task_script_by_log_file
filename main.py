@@ -1,5 +1,6 @@
 import argparse
 import json
+import datetime
 
 from tabulate import tabulate
 
@@ -13,12 +14,21 @@ def parse_command_line() -> argparse.Namespace:
     parser.add_argument("--report", help="",
                         type=str, choices=["average"])
 
+    def valid_date(date_string):
+        try:
+            return datetime.datetime.fromisoformat(date_string).date()
+        except ValueError:
+            raise argparse.ArgumentTypeError(f"Date is not in format YYYY-MM-DD.")
+
+    parser.add_argument("--date", help="date for data analysis",
+                        type=valid_date)
+
     args = parser.parse_args()
 
     return args
 
 
-def analyzes_log_files_average(paths: list[str]) -> list[dict]:
+def analyzes_log_files_average(paths: list[str], date=None) -> list[dict]:
     """
     Функция для анализа файлов с логами. Находит количество эндпоинтов,
     общее время ответа и среднее время ответа по каждому эндпоинту.
@@ -31,18 +41,25 @@ def analyzes_log_files_average(paths: list[str]) -> list[dict]:
             for row_f in file:
                 row_file = json.loads(row_f)
 
-                if row_file.get("status") == 200:
+                if row_file.get("status") != 200:
+                    continue
 
-                    if row_file.get("url") not in (row.get("url") for row in result_data):
-                        result_data.append({"url": row_file.get("url"),
-                                            "sum_response_time": row_file.get("response_time"),
-                                            "count": 1})
+                if date:
+                    target_date = datetime.datetime.strptime(date, "%Y-%m-%d").date() if isinstance(date, str) else date
+                    current_date = datetime.datetime.fromisoformat(row_file.get("@timestamp")).date()
+                    if current_date != target_date:
+                        continue
 
-                    else:
-                        for row in result_data:
-                            if row.get("url") == row_file.get("url"):
-                                row["sum_response_time"] += row_file.get("response_time")
-                                row["count"] += 1
+                if row_file.get("url") not in (row.get("url") for row in result_data):
+                    result_data.append({"url": row_file.get("url"),
+                                        "sum_response_time": row_file.get("response_time"),
+                                        "count": 1})
+
+                else:
+                    for row in result_data:
+                        if row.get("url") == row_file.get("url"):
+                            row["sum_response_time"] += row_file.get("response_time")
+                            row["count"] += 1
 
     for data in result_data:
         sum_response_time = data.get("sum_response_time")
@@ -70,7 +87,7 @@ def main() -> None:
 
     if command_line_args.report == "average":
         if command_line_args.file:
-            log_data = analyzes_log_files_average(command_line_args.file)
+            log_data = analyzes_log_files_average(command_line_args.file, date=command_line_args.date)
             display_average(log_data)
         else:
             raise ValueError("Path not specified. Specify the path to the file or files.")
